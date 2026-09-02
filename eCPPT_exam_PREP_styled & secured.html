@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eCPPT Runtime-Weighted Study Calendar</title>
+    <style>
+        /* ── Reset & Base ── */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #0a0e1a;
+            color: #e8edf5;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #141b2b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a3a5a;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3a4a6a;
+        }
+
+        /* ── Sticky Header Section ── */
+        .header-section {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #0a0e1a;
+            border-bottom: 1px solid #1a2844;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ── Header ── */
+        header {
+            padding: 20px 32px 14px;
+            background: #0a0e1a;
+        }
+
+        .header-content {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin: 0 0 2px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sub {
+            color: #8a9bb5;
+            font-size: 0.85rem;
+            font-weight: 400;
+            letter-spacing: 0.01em;
+        }
+
+        .muted {
+            color: #6a7b95;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+            align-items: center;
+        }
+
+        select,
+        input,
+        button,
+        textarea {
+            background: #111b2e;
+            color: #e8edf5;
+            border: 1px solid #1f2d48;
+            border-radius: 8px;
+            padding: 9px 14px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        select:hover,
+        input:hover,
+        button:hover {
+            border-color: #3a5a8a;
+        }
+
+        select:focus,
+        input:focus,
+        button:focus {
+            border-color: #5b7fc7;
+            box-shadow: 0 0 0 3px rgba(91, 127, 199, 0.15);
+        }
+
+        select {
+            min-width: 160px;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236a7b95' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+
+        select option {
+            background: #111b2e;
+        }
+
+        input {
+            min-width: 240px;
+            flex: 1;
+            min-width: 180px;
+        }
+        input::placeholder {
+            color: #4a5a7a;
+        }
+
+        button {
+            cursor: pointer;
+            font-weight: 500;
+            background: #1a2844;
+            border-color: #2a3a5a;
+            padding: 9px 18px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background: #2a3a5a;
+            border-color: #3a5a8a;
+            transform: translateY(-1px);
+        }
+
+        button#print {
+            background: #1a2844;
+        }
+
+        button#reset {
+            background: #2a1a2a;
+            border-color: #4a2a3a;
+        }
+
+        button#reset:hover {
+            background: #3a2a3a;
+            border-color: #6a3a4a;
+        }
+
+        button.primary {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
+        }
+
+        button.primary:hover {
+            background: #3b7bff;
+            border-color: #3b7bff;
+        }
+
+        /* ── Legend ── */
+        .legend {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 10px 32px;
+            background: #0f1728;
+            border-top: 1px solid #1a2844;
+            border-bottom: 1px solid #1a2844;
+        }
+
+        .chip {
+            color: #fff;
+            border-radius: 6px;
+            padding: 4px 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            opacity: 0.85;
+            transition: opacity 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .chip:hover {
+            opacity: 1;
+        }
+
+        .tag {
+            color: #fff;
+            border-radius: 4px;
+            padding: 3px 10px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+
+        /* ── Progress ── */
+        .progress {
+            padding: 10px 32px;
+            background: #0a0e1a;
+        }
+
+        .progress-inner {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #8a9bb5;
+            margin-bottom: 6px;
+        }
+
+        .stats span:first-child {
+            font-weight: 600;
+            color: #c8d5e8;
+        }
+
+        .bar {
+            height: 5px;
+            background: #1a2844;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .fill {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        /* ── Sticky Day Headers ── */
+        .calendar-header-wrapper {
+            background: #0a0e1a;
+            border-top: 1px solid #1a2844;
+            padding: 0 24px;
+        }
+
+        .calendar-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 6px 0 4px 0;
+            border-bottom: 2px solid #1a2844;
+        }
+
+        .calendar-header .dow {
+            text-align: center;
+            color: #f1f6ff;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 6px 0 4px;
+            background: #0e1527;
+            border-bottom: none;
+        }
+
+        /* ── Container ── */
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 20px 24px 40px;
+        }
+
+        /* ── Calendar Grid ── */
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        /* ── Month Header ── */
+        .month-header {
+            grid-column: 1 / -1;
+            padding: 16px 0 10px 4px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #b9c7db;
+            letter-spacing: 0.04em;
+            border-bottom: 2px solid #1a2844;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .month-header:first-of-type {
+            margin-top: 0;
+        }
+
+        .month-header .month-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        .day {
+            min-height: 165px;
+            padding: 12px 12px 10px;
+            background: #16223b;
+            border: 1px solid #1a2844;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .day:hover {
+            border-color: #2b7bf3;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            background: #1d3672;
+        }
+
+        .day.done {
+            border-color: #22c55e;
+            box-shadow: inset 0 0 0 1px #22c55e44, 0 4px 20px rgba(34, 197, 94, 0.05);
+        }
+
+        .day.done:hover {
+            border-color: #22c55e;
+            box-shadow: inset 0 0 0 1px #22c55e66, 0 8px 30px rgba(34, 197, 94, 0.08);
+            background: #167539f3;
+        }
+
+        .empty {
+            visibility: hidden;
+            pointer-events: none;
+            min-height: 165px;
+            border: none;
+            background: transparent;
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 4px;
+        }
+
+        .num {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #fafafa;
+            line-height: 1.2;
+        }
+
+        .day.done .num {
+            color: #22c55e;
+        }
+
+        .tick {
+            color: #22c55e;
+            font-size: 16px;
+            font-weight: 700;
+            margin-left: 4px;
+        }
+
+        .day-tag {
+            flex-shrink: 0;
+            margin-left: 4px;
+        }
+
+        .day-title {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #ffffffe7;
+            line-height: 1.3;
+            margin: 3px 0 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .day-time {
+            font-size: 0.70rem;
+            color: #aeb4bd;
+            line-height: 1.4;
+            margin-top: auto;
+            padding-top: 4px;
+            border-top: 1px solid #141b2b;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .day-time span {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .day-mini {
+            font-size: 0.65rem;
+            color: #808ca5;
+            margin-top: 3px;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* ── Modal ── */
+        .modalbg {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 20;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .modalbg.open {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.97);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal {
+            width: min(880px, 100%);
+            max-height: 90vh;
+            overflow: auto;
+            background: #0f1728;
+            border: 1px solid #1a2844;
+            border-radius: 16px;
+            padding: 28px 32px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+        }
+
+        .modal::-webkit-scrollbar {
+            width: 4px;
+        }
+        .modal::-webkit-scrollbar-thumb {
+            background: #2a3a5a;
+            border-radius: 2px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 4px;
+        }
+
+        .modal-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .modal-header-left .tag {
+            font-size: 0.7rem;
+            padding: 4px 12px;
+        }
+
+        .close {
+            background: none;
+            border: none;
+            color: #6a7b95;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            line-height: 1;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .close:hover {
+            color: #e8edf5;
+            background: #1a2844;
+        }
+
+        #modalTitle {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #e8edf5;
+            margin: 0 0 4px;
+            letter-spacing: -0.01em;
+        }
+
+        .section {
+            border-top: 1px solid #1a2844;
+            margin-top: 16px;
+            padding-top: 16px;
+        }
+
+        .section h3 {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #8a9bb5;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 10px;
+        }
+
+        .video {
+            padding: 8px 0;
+            border-bottom: 1px solid #141b2b;
+            font-size: 0.85rem;
+            color: #c8d5e8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .video:last-child {
+            border-bottom: none;
+        }
+
+        .video .v-title {
+            flex: 1;
+        }
+
+        .video .v-mins {
+            color: #6a7b95;
+            font-size: 0.75rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .time-budget {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 4px 0 2px;
+        }
+
+        .time-budget-item {
+            background: #0a0e1a;
+            border-radius: 8px;
+            padding: 10px 14px;
+            text-align: center;
+            border: 1px solid #141b2b;
+        }
+
+        .time-budget-item .icon {
+            font-size: 1.1rem;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .time-budget-item .value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #e8edf5;
+        }
+
+        .time-budget-item .label {
+            font-size: 0.65rem;
+            color: #6a7b95;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .time-budget-note {
+            font-size: 0.75rem;
+            color: #5a6a8a;
+            margin-top: 10px;
+            padding: 10px 14px;
+            background: #0a0e1a;
+            border-radius: 8px;
+            border-left: 3px solid #2a3a5a;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 0.85rem;
+            background: #0a0e1a;
+            border: 1px solid #1a2844;
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: #e8edf5;
+            transition: border-color 0.2s ease;
+        }
+
+        textarea:focus {
+            border-color: #3a5a8a;
+            box-shadow: 0 0 0 3px rgba(58, 90, 138, 0.15);
+            outline: none;
+        }
+
+        textarea::placeholder {
+            color: #4a5a7a;
+        }
+
+        .check {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #c8d5e8;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .check input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #2563eb;
+            cursor: pointer;
+            min-width: unset;
+            padding: 0;
+            border-radius: 4px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .actions button {
+            flex: 1;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+            .calendar {
+                gap: 6px;
+            }
+            .calendar-header {
+                gap: 6px;
+            }
+            .day {
+                min-height: 150px;
+                padding: 10px;
+            }
+            .time-budget {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .calendar {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 6px;
+            }
+            .calendar-header {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 6px;
+            }
+            .day {
+                min-height: 140px;
+                padding: 8px 10px;
+            }
+            header {
+                padding: 14px 18px 10px;
+            }
+            .legend {
+                padding: 8px 18px;
+            }
+            .progress {
+                padding: 8px 18px;
+            }
+            .calendar-header-wrapper {
+                padding: 0 14px;
+            }
+            h1 {
+                font-size: 1.1rem;
+            }
+            .container {
+                padding: 12px 14px 30px;
+            }
+            .legend {
+                gap: 5px;
+            }
+            .chip {
+                font-size: 0.6rem;
+                padding: 3px 8px;
+            }
+            .modal {
+                padding: 20px;
+            }
+            .time-budget {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+            .time-budget-item {
+                padding: 8px 12px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                text-align: left;
+            }
+            .time-budget-item .icon {
+                margin-bottom: 0;
+                font-size: 0.9rem;
+            }
+            .toolbar {
+                gap: 6px;
+            }
+            select,
+            input,
+            button {
+                padding: 7px 12px;
+                font-size: 0.8rem;
+            }
+            input {
+                min-width: 140px;
+            }
+            .modal-header {
+                flex-direction: column;
+                gap: 8px;
+            }
+            .modal-header-left {
+                flex-wrap: wrap;
+            }
+            #modalTitle {
+                font-size: 1rem;
+            }
+            .video {
+                font-size: 0.8rem;
+                flex-wrap: wrap;
+            }
+            .day-time {
+                font-size: 0.55rem;
+                gap: 4px;
+            }
+            .day-title {
+                font-size: 0.65rem;
+            }
+            .day-mini {
+                font-size: 0.55rem;
+            }
+            .num {
+                font-size: 0.9rem;
+            }
+            .month-header {
+                font-size: 0.9rem;
+                padding: 12px 0 6px 2px;
+            }
+            .calendar-header .dow {
+                font-size: 0.6rem;
+                padding: 4px 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .calendar {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 5px;
+            }
+            .calendar-header {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 5px;
+            }
+            .calendar-header .dow {
+                font-size: 0.55rem;
+                padding: 4px 0;
+            }
+            .day {
+                min-height: 130px;
+                padding: 8px;
+            }
+            .day .day-time {
+                display: none;
+            }
+            .day .day-mini {
+                -webkit-line-clamp: 1;
+            }
+            .day-title {
+                -webkit-line-clamp: 1;
+            }
+            .empty {
+                min-height: 130px;
+            }
+            .stats {
+                flex-direction: column;
+                gap: 2px;
+                font-size: 0.75rem;
+            }
+            .legend {
+                display: none;
+            }
+            .month-header {
+                font-size: 0.8rem;
+                padding: 8px 0 4px 2px;
+            }
+        }
+
+        @media print {
+            .header-section {
+                position: static !important;
+                border-bottom: 1px solid #ccc !important;
+            }
+            header,
+            .modalbg {
+                display: none !important;
+            }
+            .container {
+                padding: 0;
+            }
+            .calendar-header {
+                position: static !important;
+                background: #fff !important;
+                border-bottom: 1px solid #ccc !important;
+            }
+            .calendar-header .dow {
+                background: #fff !important;
+                color: #333 !important;
+            }
+            .day {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                border-color: #333 !important;
+            }
+            .day:hover {
+                transform: none !important;
+                box-shadow: none !important;
+            }
+            .progress {
+                border-color: #333 !important;
+            }
+            .bar {
+                background: #ddd !important;
+            }
+            .fill {
+                background: #2563eb !important;
+            }
+            .month-header {
+                color: #333 !important;
+                border-bottom-color: #ccc !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ─── STICKY HEADER SECTION ─── -->
+    <div class="header-section">
+        <!-- Header -->
+        <header>
+            <div class="header-content">
+                <h1> Seyon's eCPPT Penetration Testing Professional Certification Learning Path</h1>
+                <div class="sub">Runtime-Weighted Study Calendar · Starts 1 September 2026 · Video runtime + variable practical time</div>
+                <div class="toolbar">
+                    <select id="module"></select>
+                    <select id="status">
+                        <option value="all">All dates</option>
+                        <option value="todo">To Do</option>
+                        <option value="done">Completed</option>
+                    </select>
+                    <input id="search" placeholder="Search video or technique…">
+                    <button id="print">🖨 Print</button>
+                    <button id="reset">↺ Reset</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Legend -->
+        <div class="legend">
+            <span class="chip" style="background:#2563eb">Module 1: Network</span>
+            <span class="chip" style="background:#7c3aed">Module 2: Web App</span>
+            <span class="chip" style="background:#059669">Module 3: PowerShell</span>
+            <span class="chip" style="background:#dc2626">Module 4: Active Directory</span>
+            <span class="chip" style="background:#ea580c">Module 5: Priv Escalation</span>
+            <span class="chip" style="background:#0891b2">Module 6: Lateral Movement</span>
+            <span class="chip" style="background:#db2777">Module 7: Client-Side</span>
+            <span class="chip" style="background:#4f46e5">Module 8: C2C&amp;C</span>
+            <span class="chip" style="background:#475569">Module 9: x86 Assembly</span>
+            <span class="chip" style="background:#9333ea">Module 10: Exploit Dev</span>
+            <span class="chip" style="background:#64748b">Review</span>
+            <span class="chip" style="background:#111827; border:1px solid #2a3a5a;">Capstone</span>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress">
+            <div class="progress-inner">
+                <div class="stats">
+                    <span id="stats">0 / 0 days completed</span>
+                    <span>💾 Saved locally</span>
+                </div>
+                <div class="bar">
+                    <div id="fill" class="fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sticky Day Headers -->
+        <div class="calendar-header-wrapper">
+            <div class="calendar-header" id="calendarHeader">
+                <div class="dow">Sun</div>
+                <div class="dow">Mon</div>
+                <div class="dow">Tue</div>
+                <div class="dow">Wed</div>
+                <div class="dow">Thu</div>
+                <div class="dow">Fri</div>
+                <div class="dow">Sat</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── MAIN CONTENT ─── -->
+    <main class="container">
+        <!-- Calendar Grid -->
+        <div id="calendar" class="calendar"></div>
+    </main>
+
+    <!-- ─── MODAL ─── -->
+    <div id="modalbg" class="modalbg">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <span id="tag" class="tag"></span>
+                    <h2 id="modalTitle"></h2>
+                </div>
+                <button id="close" class="close">✕</button>
+            </div>
+
+            <div class="section">
+                <h3>📹 Today's Videos / Focus</h3>
+                <div id="videos"></div>
+            </div>
+
+            <div class="section">
+                <h3>⏱ Time Budget</h3>
+                <div class="time-budget">
+                    <div class="time-budget-item">
+                        <span class="icon">📺</span>
+                        <span class="value" id="study">0 min</span>
+                        <span class="label">Study / Video</span>
+                    </div>
+                    <div class="time-budget-item">
+                        <span class="icon">🧪</span>
+                        <span class="value" id="lab">0 min</span>
+                        <span class="label">Practical Lab</span>
+                    </div>
+                    <div class="time-budget-item">
+                        <span class="icon">📝</span>
+                        <span class="value" id="notes">0 min</span>
+                        <span class="label">Notes &amp; Summary</span>
+                    </div>
+                </div>
+                <div class="time-budget-note">
+                    Study time follows the supplied video runtime. Practical time is intentionally larger for AD, lateral movement, client-side, x86 and exploit-development work.
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>✅ Completion &amp; Notes</h3>
+                <label class="check">
+                    <input id="done" type="checkbox"> Mark this day completed
+                </label>
+                <p class="muted" style="font-size:0.75rem; margin-bottom:8px;">Your notes are stored locally and appear only after opening the date.</p>
+                <textarea id="dayNotes" placeholder="What did I learn? What failed? Commands/concepts to revisit?"></textarea>
+                <div class="actions">
+                    <button id="save" class="primary">💾 Save notes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ─── DATA ──────────────────────────────────────────────────────────────
+        const D = {
+            days: [
+                {"date":"2026-09-01","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"Course Introduction","mins":9.2},{"title":"Active Information Gathering","mins":7.2},{"title":"Networking Fundamentals","mins":15.6}],"study":32,"lab":75,"notes":30,"review":false},
+                {"date":"2026-09-02","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"Network Layer","mins":31.6}],"study":32,"lab":75,"notes":30,"review":false},
+                {"date":"2026-09-03","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"Transport Layer","mins":37.4},{"title":"Network Mapping","mins":13.0},{"title":"Host Discovery Techniques","mins":10.0}],"study":60,"lab":95,"notes":30,"review":false},
+                {"date":"2026-09-04","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"Ping Sweeps","mins":23.4},{"title":"Host Discovery with Nmap - Part 1","mins":26.2}],"study":50,"lab":75,"notes":30,"review":false},
+                {"date":"2026-09-05","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"Host Discovery with Nmap - Part 2","mins":23.4},{"title":"Port Scanning with Nmap","mins":36.7}],"study":60,"lab":125,"notes":30,"review":false},
+                {"date":"2026-09-06","module":"R","module_name":"Weekly Review & Consolidation","videos":[],"study":45,"lab":90,"notes":45,"review":true},
+                {"date":"2026-09-07","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"Service Version & OS Detection","mins":16.2},{"title":"Nmap Scripting Engine (NSE)","mins":32.3}],"study":48,"lab":75,"notes":30,"review":false},
+                {"date":"2026-09-08","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"Firewall Detection & IDS Evasion","mins":26.2},{"title":"Optimizing Nmap Scans","mins":20.3}],"study":46,"lab":75,"notes":30,"review":false},
+                {"date":"2026-09-09","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"Nmap Output Formats","mins":21.6},{"title":"Introduction to Enumeration","mins":5.8}],"study":27,"lab":75,"notes":30,"review":false},
+                {"date":"2026-09-10","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"SMB___NetBIOS_Enumeration","mins":null}],"study":45,"lab":105,"notes":30,"review":false},
+                {"date":"2026-09-11","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"SNMP_Enumeration","mins":null}],"study":45,"lab":105,"notes":30,"review":false},
+                {"date":"2026-09-12","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"Linux_Service_Enumeration","mins":null}],"study":45,"lab":135,"notes":30,"review":false},
+                {"date":"2026-09-13","module":"R","module_name":"Weekly Review & Consolidation","videos":[],"study":45,"lab":90,"notes":45,"review":true},
+                {"date":"2026-09-14","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"SMB_Relay_Attack","mins":null}],"study":45,"lab":105,"notes":30,"review":false},
+                {"date":"2026-09-15","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"MSSQL_DB_User_Impersonation_to_RCE","mins":null}],"study":45,"lab":105,"notes":30,"review":false},
+                {"date":"2026-09-16","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"Linux_Black-Box_Penetration_Test","mins":null}],"study":45,"lab":105,"notes":30,"review":false},
+                {"date":"2026-09-17","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"Dumping___Cracking_NTLM_Hashes","mins":null}],"study":45,"lab":105,"notes":30,"review":false},
+                {"date":"2026-09-18","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"Windows_Post-Exploitation_Lab","mins":null}],"study":45,"lab":105,"notes":30,"review":false},
+                {"date":"2026-09-19","module":"1","module_name":"Network Penetration Testing","videos":[{"title":"│   └── 026_Course Conclusion_1717745829269","mins":5.6}],"study":6,"lab":105,"notes":30,"review":false},
+                {"date":"2026-09-20","module":"R","module_name":"Weekly Review & Consolidation","videos":[],"study":45,"lab":90,"notes":45,"review":true},
+                {"date":"2026-09-21","module":"2","module_name":"Web Application Penetration Testing","videos":[{"title":"Course Introduction","mins":12.0},{"title":"Introduction to Web Enumeration & Information Gathering","mins":9.4},{"title":"OWASP Web Security Testing Guide","mins":11.0},{"title":"WHOIS","mins":22.5}],"study":55,"lab":90,"notes":30,"review":false},
+                {"date":"2026-09-22","module":"2","module_name":"Web Application Penetration Testing","videos":[{"title":"Website Fingerprinting with Netcraft","mins":19.8},{"title":"Passive DNS Enumeration","mins":22.7},{"title":"Reviewing Web Server Metafiles","mins":12.2}],"study":55,"lab":90,"notes":30,"review":false},
+                {"date":"2026-09-23","module":"2","module_name":"Web Application Penetration Testing","videos":[{"title":"Web App Technology Fingerprinting","mins":12.4},{"title":"Crawling with Burp Suite & OWASP ZAP","mins":25.9},{"title":"Web Server Fingerprinting","mins":20.0}],"study":58,"lab":110,"notes":30,"review":false},
+                {"date":"2026-09-24","module":"2","module_name":"Web Application Penetration Testing","videos":[{"title":"Web Server Vulnerability Scanning with Nikto","mins":10.4},{"title":"File & Directory Brute Force","mins":13.2},{"title":"Automated Recon with OWASP Amass","mins":20.2}],"study":44,"lab":90,"notes":30,"review":false},
+                {"date":"2026-09-25","module":"2","module_name":"Web Application Penetration Testing","videos":[{"title":"Identifying & Exploiting Reflected XSS Vulnerabilities","mins":28.4},{"title":"Identifying & Exploiting Stored XSS Vulnerabilities","mins":15.0},{"title":"Identifying & Exploiting DOM-Based XSS Vulnerabilities","mins":16.0}],"study":59,"lab":110,"notes":30,"review":false},
+                {"date":"2026-09-26","module":"2","module_name":"Web Application Penetration Testing","videos":[{"title":"Finding SQL Injection Vulnerabilities","mins":25.7},{"title":"Exploiting Error-Based SQL Injection Vulnerabilities - Part 1","mins":34.8}],"study":60,"lab":140,"notes":30,"review":false},
+                {"date":"2026-09-27","module":"R","module_name":"Weekly Review & Consolidation","videos":[],"study":45,"lab":90,"notes":45,"review":true},
+                {"date":"2026-09-28","module":"2","module_name":"Web Application Penetration Testing","videos":[{"title":"Exploiting Error-Based SQL Injection Vulnerabilities - Part 2","mins":32.7},{"title":"Exploiting Union-Based SQL Injection Vulnerabilities - Part 1","mins":22.1}],"study":55,"lab":90,"notes":30,"review":false},
+                {"date":"2026-09-29","module":"2","module_name":"Web Application Penetration Testing","videos":[{"title":"Exploiting Union-Based SQL Injection Vulnerabilities - Part 2","mins":31.2},{"title":"│   └── 022_Course Conclusion","mins":3.9}],"study":35,"lab":90,"notes":30,"review":false},
+                {"date":"2026-09-30","module":"3","module_name":"PowerShell for Pentesters","videos":[{"title":"Course Introduction","mins":7.7},{"title":"Introduction to PowerShell","mins":7.3},{"title":"Why PowerShell_","mins":8.6},{"title":"The PowerShell CLI","mins":13.6},{"title":"Getting Comfortable with PowerShell","mins":13.8}],"study":51,"lab":75,"notes":30,"review":false},
+                {"date":"2026-10-01","module":"3","module_name":"PowerShell for Pentesters","videos":[{"title":"PowerShell Cmdlets","mins":11.3},{"title":"PowerShell Modules","mins":4.2},{"title":"PowerShell Scripts","mins":13.7},{"title":"PowerShell Objects","mins":7.8}],"study":37,"lab":75,"notes":30,"review":false},
+                {"date":"2026-10-02","module":"3","module_name":"PowerShell for Pentesters","videos":[{"title":"Leveraging PowerShell During Exploitation","mins":25.8},{"title":"PowerShell-Empire","mins":34.3}],"study":60,"lab":95,"notes":30,"review":false},
+                {"date":"2026-10-03","module":"3","module_name":"PowerShell for Pentesters","videos":[{"title":"AV Evasion with Shellter","mins":31.5},{"title":"│   └── 013_Obfuscating PowerShell Code","mins":16.6}],"study":48,"lab":105,"notes":30,"review":false},
+                {"date":"2026-10-04","module":"R","module_name":"Weekly Review & Consolidation","videos":[],"study":45,"lab":90,"notes":45,"review":true},
+                {"date":"2026-10-05","module":"4","module_name":"Active Directory Penetration Testing","videos":[{"title":"Introduction","mins":null}],"study":45,"lab":150,"notes":40,"review":false},
+                {"date":"2026-10-06","module":"4","module_name":"Active Directory Penetration Testing","videos":[{"title":"Users, Groups & Computers","mins":40.8},{"title":"Organizational Units (OUs)","mins":20.9}],"study":62,"lab":140,"notes":40,"review":false},
+                {"date":"2026-10-07","module":"4","module_name":"Active Directory Penetration Testing","videos":[{"title":"Active Directory Authentication","mins":11.2},{"title":"Trees, Forests & Trusts","mins":7.9},{"title":"AD Penetration Testing Methodology","mins":15.0},{"title":"Password Spraying","mins":12.0}],"study":46,"lab":120,"notes":40,"review":false},
+                {"date":"2026-10-08","module":"4","module_name":"Active Directory Penetration Testing","videos":[{"title":"AD Enumeration_ BloodHound","mins":20.9},{"title":"AD Enumeration_ PowerView","mins":28.8}],"study":50,"lab":120,"notes":40,"review":false},
+                {"date":"2026-10-09","module":"4","module_name":"Active Directory Penetration Testing","videos":[{"title":"AS-REP Roasting","mins":15.6},{"title":"Kerberoasting","mins":17.1},{"title":"AD Lateral Movement_ Pass-the-Hash","mins":19.6}],"study":52,"lab":120,"notes":40,"review":false},
+                {"date":"2026-10-10","module":"4","module_name":"Active Directory Penetration Testing","videos":[{"title":"AD Lateral Movement_ Pass-the-Ticket","mins":17.8},{"title":"AD Persistence_ Golden Ticket","mins":23.9}],"study":42,"lab":150,"notes":40,"review":false},
+                {"date":"2026-10-11","module":"R","module_name":"Weekly Review & Consolidation","videos":[],"study":45,"lab":90,"notes":45,"review":true},
+                {"date":"2026-10-12","module":"4","module_name":"Active Directory Penetration Testing","videos":[{"title":"│   └── 015_AD Persistence_ Silver Ticket","mins":29.8}],"study":30,"lab":120,"notes":40,"review":false},
+                {"date":"2026-10-13","module":"5","module_name":"Privilege Escalation","videos":[{"title":"Course Introduction","mins":11.8},{"title":"Introduction to Privilege Escalation","mins":5.8},{"title":"Privilege Escalation with PowerUp","mins":18.6},{"title":"Privilege Escalation with Privesc Check","mins":8.7},{"title":" Unattended Installation Files","mins":16.5}],"study":61,"lab":130,"notes":40,"review":false},
+                {"date":"2026-10-14","module":"5","module_name":"Privilege Escalation","videos":[{"title":"Windows Credential Manager","mins":19.5},{"title":" PowerShell History","mins":13.2},{"title":"Exploiting Insecure Service Permissions","mins":23.1}],"study":56,"lab":130,"notes":40,"review":false},
+                {"date":"2026-10-15","module":"5","module_name":"Privilege Escalation","videos":[{"title":"Privilege Escalation via Registry AutoRuns","mins":24.2},{"title":" Access Token Impersonation","mins":14.6},{"title":"Juicy Potato","mins":22.6}],"study":61,"lab":130,"notes":40,"review":false},
+                {"date":"2026-10-16","module":"5","module_name":"Privilege Escalation","videos":[{"title":"Bypassing UAC with UACMe","mins":23.3},{"title":"DLL Hijacking","mins":24.7},{"title":"Locally Stored Credentials","mins":5.2},{"title":"Misconfigured File Permissions","mins":6.6}],"study":60,"lab":130,"notes":40,"review":false},
+                {"date":"2026-10-17","module":"5","module_name":"Privilege Escalation","videos":[{"title":"Exploiting SUID Binaries","mins":10.3},{"title":" Misconfigured SUDO Privileges","mins":5.8},{"title":" Shared Library Injection","mins":13.1},{"title":"│   └── 019_Course Conclusion","mins":5.4}],"study":35,"lab":140,"notes":40,"review":false},
+                {"date":"2026-10-18","module":"R","module_name":"Weekly Review & Consolidation","videos":[],"study":45,"lab":90,"notes":45,"review":true},
+                {"date":"2026-10-19","module":"6","module_name":"Lateral Movement & Pivoting","videos":[{"title":"Course Introduction","mins":11.6},{"title":"Introduction to Lateral Movement & Pivoting","mins":10.6},{"title":"Windows Lateral Movement Techniques","mins":19.6}],"study":42,"lab":120,"notes":40,"review":false},
+                {"date":"2026-10-20","module":"6","module_name":"Lateral Movement & Pivoting","videos":[{"title":"Lateral Movement with PsExec","mins":41.0},{"title":"Lateral Movement with SMBExec","mins":13.0}],"study":54,"lab":120,"notes":40,"review":false},
+                {"date":"2026-10-21","module":"6","module_name":"Lateral Movement & Pivoting","videos":[{"title":"Lateral Movement with CrackMapExec","mins":28.7},{"title":"Lateral Movement via RDP","mins":19.1}],"study":48,"lab":120,"notes":40,"review":false},
+                {"date":"2026-10-22","module":"6","module_name":"Lateral Movement & Pivoting","videos":[{"title":"Lateral Movement via WinRM","mins":28.3},{"title":"Pass-the-Hash with Metasploit","mins":8.3},{"title":"Pass-the-Hash with WMIExec","mins":11.2}],"study":48,"lab":120,"notes":40,"review":false},
+                {"date":"2026-10-23","module":"6","module_name":"Lateral Movement & Pivoting","videos":[{"title":"Linux Lateral Movement Techniques","mins":28.4},{"title":"Pivoting & Port Forwarding with Metasploit","mins":21.8}],"study":50,"lab":120,"notes":40,"review":false},
+                {"date":"2026-10-24","module":"6","module_name":"Lateral Movement & Pivoting","videos":[{"title":"Pivoting with SOCKS Proxy","mins":17.6},{"title":"Pivoting via SSH Tunneling","mins":22.2},{"title":"Pivoting with reGeorg","mins":21.8}],"study":62,"lab":170,"notes":40,"review":false},
+                {"date":"2026-10-25","module":"R","module_name":"Weekly Review & Consolidation","videos":[],"study":45,"lab":90,"notes":45,"review":true},
+                {"date":"2026-10-26","module":"6","module_name":"Lateral Movement & Pivoting","videos":[{"title":"│   └── 016_Course Conclusion","mins":7.5}],"study":8,"lab":120,"notes":40,"review":false},
+                {"date":"2026-10-27","module":"7","module_name":"Client-Side Attacks","videos":[{"title":"Course Introduction","mins":11.6},{"title":"Introduction to Client-Side Attacks","mins":24.9},{"title":"Client-Side Attack Vectors","mins":9.7}],"study":46,"lab":120,"notes":45,"review":false},
+                {"date":"2026-10-28","module":"7","module_name":"Client-Side Attacks","videos":[{"title":"Client-Side Information Gathering","mins":19.2},{"title":"Client Fingerprinting","mins":35.7}],"study":55,"lab":120,"notes":45,"review":false},
+                {"date":"2026-10-29","module":"7","module_name":"Client-Side Attacks","videos":[{"title":"Introduction to Social Engineering_1717706352952","mins":36.2}],"study":36,"lab":120,"notes":45,"review":false},
+                {"date":"2026-10-30","module":"7","module_name":"Client-Side Attacks","videos":[{"title":"Pretexting","mins":28.2},{"title":"Phishing with Gophish - Part 1","mins":23.5}],"study":52,"lab":120,"notes":45,"review":false},
+                {"date":"2026-10-31","module":"7","module_name":"Client-Side Attacks","videos":[{"title":"Phishing with Gophish - Part 2","mins":27.5}],"study":28,"lab":150,"notes":45,"review":false},
+                {"date":"2026-11-01","module":"R","module_name":"Weekly Review & Consolidation","videos":[],"study":45,"lab":90,"notes":45,"review":true},
+                {"date":"2026-11-02","module":"7","module_name":"Client-Side Attacks","videos":[{"title":"Resource Development & Weaponization","mins":37.5},{"title":"VBA Macro Fundamentals","mins":18.3}],"study":56,"lab":140,"notes":45,"review":false},
+                {"date":"2026-11-03","module":"7","module_name":"Client-Side Attacks","videos":[{"title":"VBA Macro Development - Part 1","mins":27.4},{"title":"VBA Macro Development - Part 2","mins":27.9}],"study":55,"lab":140,"notes":45,"review":false},
+                {"date":"2026-11-04","module":"7","module_name":"Client-Side Attacks","videos":[{"title":"Weaponizing VBA Macros with MSF","mins":26.7},{"title":"VBA PowerShell Dropper","mins":24.3}],"study":51,"lab":120,"notes":45,"review":false},
+                {"date":"2026-11-05","module":"7","module_name":"Client-Side Attacks","videos":[{"title":"VBA Reverse Shell Macro with Powercat","mins":29.5},{"title":"Using ActiveX Controls for Macro Execution","mins":29.9}],"study":59,"lab":140,"notes":45,"review":false},
+                {"date":"2026-11-06","module":"7","module_name":"Client-Side Attacks","videos":[{"title":"Pretexting Phishing Documents","mins":20.4},{"title":"HTML Applications (HTA)","mins":26.5},{"title":"HTA Attacks","mins":12.9}],"study":60,"lab":140,"notes":45,"review":false},
+                {"date":"2026-11-07","module":"7","module_name":"Client-Side Attacks","videos":[{"title":"Automating Macro Development with MacroPack - Part 1","mins":25.6},{"title":"Automating Macro Development with MacroPack - Part 2","mins":27.7}],"study":53,"lab":150,"notes":45,"review":false},
+                {"date":"2026-11-08","module":"R","module_name":"Weekly Review & Consolidation","videos":[],"study":45,"lab":90,"notes":45,"review":true},
+                {"date":"2026-11-09","module":"7","module_name":"Client-Side Attacks","videos":[{"title":"File Smuggling with HTML & JavaScript","mins":24.3},{"title":"Initial Access Via Spear Phishing Attachment","mins":29.8}],"study":54,"lab":120,"notes":45,"review":false},
+                {"date":"2026-11-10","module":"7","module_name":"Client-Side Attacks","videos":[{"title":"Establishing a Shell Through the Victim’s Browser","mins":27.3},{"title":"│   └── 026_Course Conclusion","mins":8.7}],"study":36,"lab":120,"notes":45,"review":false},
+                {"date":"2026-11-11","module":"8","module_name":"Command & Control (C2C&C)","videos":[{"title":"Course Introduction","mins":7.3},{"title":"Introduction to Command & Control","mins":17.7},{"title":"Introduction to C2 Frameworks","mins":14.2},{"title":" C2 Framework Terminology","mins":8.2}],"study":47,"lab":105,"notes":40,"review":false},
+                {"date":"2026-11-12","module":"8","module_name":"Command & Control (C2C&C)","videos":[{"title":"C2 Deployment & Operation","mins":16.4},{"title":"The C2 Matrix - Choosing the Correct C2 Framework","mins":17.4},{"title":"Introduction to PowerShell-Empire","mins":17.0}],"study":51,"lab":105,"notes":40,"review":false},
+                {"date":"2026-11-13","module":"8","module_name":"Command & Control (C2C&C)","videos":[{"title":" Red Team Ops with PowerShell-Empire","mins":46.5}],"study":46,"lab":105,"notes":40,"review":false},
+                {"date":"2026-11-14","module":"8","module_name":"Command & Control (C2C&C)","videos":[{"title":"Red Team Ops with Starkiller","mins":18.1},{"title":"│   └── 011_ Course Conclusion","mins":4.5}],"study":23,"lab":135,"notes":40,"review":false},
+                {"date":"2026-11-15","module":"R","module_name":"Weekly Review & Consolidation","videos":[],"study":45,"lab":90,"notes":45,"review":true},
+                {"date":"2026-11-16","module":"9","module_name":"System Security & x86 Assembly Fundamentals","videos":[{"title":"Course Introduction","mins":11.6},{"title":"Introduction to System Security","mins":7.0},{"title":"CPU Architecture","mins":18.4},{"title":"Registers","mins":23.6}],"study":61,"lab":140,"notes":45,"review":false},
+                {"date":"2026-11-17","module":"9","module_name":"System Security & x86 Assembly Fundamentals","videos":[{"title":"Process Memory","mins":7.4},{"title":"Understanding the Stack","mins":26.6},{"title":"Stack Frames","mins":10.8},{"title":"Assemblers & Compilers","mins":6.9}],"study":52,"lab":120,"notes":45,"review":false},
+                {"date":"2026-11-18","module":"9","module_name":"System Security & x86 Assembly Fundamentals","videos":[{"title":"Introduction to Assembly","mins":11.3},{"title":"Setting Up Our Lab","mins":7.8},{"title":"Hello World in Assembly","mins":19.9},{"title":"Data Types & Variables","mins":8.6},{"title":"Course Conclusion","mins":6.3}],"study":54,"lab":120,"notes":45,"review":false},
+                {"date":"2026-11-19","module":"10","module_name":"Exploit Development Buffer Overflows","videos":[{"title":"Course Introduction","mins":6.2},{"title":"Introduction to Buffer Overflows","mins":20.0},{"title":"Finding Buffer Overflows","mins":8.6}],"study":35,"lab":150,"notes":45,"review":false},
+                {"date":"2026-11-20","module":"10","module_name":"Exploit Development Buffer Overflows","videos":[{"title":"Finding Buffer Overflows with Fuzzing","mins":31.7},{"title":"Windows Stack Overflows","mins":3.8},{"title":"Structured Exception Handling (SEH)","mins":4.5},{"title":"Windows SEH Overflow (EasyChat)","mins":12.1},{"title":"Course Conclusion","mins":3.5}],"study":56,"lab":170,"notes":45,"review":false},
+                {"date":"2026-11-21","module":"C","module_name":"Final Capstone & Exam Preparation","videos":[],"study":45,"lab":180,"notes":45,"review":false,"override":["Full-scope mock: reconnaissance → enumeration → exploitation → privilege escalation → lateral movement"]},
+                {"date":"2026-11-22","module":"C","module_name":"Final Capstone & Exam Preparation","videos":[],"study":45,"lab":180,"notes":60,"review":false,"override":["Integrated web + AD + pivoting lab; produce a concise professional pentest report"]},
+                {"date":"2026-11-23","module":"C","module_name":"Final Capstone & Exam Preparation","videos":[],"study":45,"lab":150,"notes":60,"review":false,"override":["Final revision: methodology, tool recall, weak areas and timed practical rehearsal"]}
+            ],
+            colors: {
+                "1": "#2563eb",
+                "2": "#7c3aed",
+                "3": "#059669",
+                "4": "#dc2626",
+                "5": "#ea580c",
+                "6": "#0891b2",
+                "7": "#db2777",
+                "8": "#4f46e5",
+                "9": "#475569",
+                "10": "#9333ea",
+                "R": "#64748b",
+                "C": "#111827"
+            },
+            module_names: {
+                "1": "Network Penetration Testing",
+                "2": "Web Application Penetration Testing",
+                "3": "PowerShell for Pentesters",
+                "4": "Active Directory Penetration Testing",
+                "5": "Privilege Escalation",
+                "6": "Lateral Movement & Pivoting",
+                "7": "Client-Side Attacks",
+                "8": "Command & Control (C2C&C)",
+                "9": "System Security & x86 Assembly Fundamentals",
+                "10": "Exploit Development Buffer Overflows",
+                "R": "Weekly Review & Consolidation",
+                "C": "Final Capstone & Exam Preparation"
+            }
+        };
+
+        // ─── STATE ──────────────────────────────────────────────────────────────
+        const KEY = "ecppt_runtime_calendar_v4";
+        let S = JSON.parse(localStorage.getItem(KEY) || "{}");
+        let CUR = null;
+        const $ = s => document.querySelector(s);
+
+        // Create a global dayMap for lookups
+        const dayMap = {};
+        D.days.forEach(d => { dayMap[d.date] = d; });
+
+        function save() {
+            localStorage.setItem(KEY, JSON.stringify(S));
+            render();
+        }
+
+        function esc(s) {
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[c]));
+        }
+
+        // Helper function to format date as YYYY-MM-DD without timezone issues
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return year + '-' + month + '-' + day;
+        }
+
+        // Get month name
+        function getMonthName(monthIndex) {
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            return months[monthIndex];
+        }
+
+        function openDay(isoDate) {
+            let x = dayMap[isoDate];
+            if (!x) return;
+
+            CUR = x;
+            let s = S[x.date] || {};
+
+            $("#modalTitle").textContent = new Date(x.date + "T00:00:00").toLocaleDateString(undefined, {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric"
+            });
+
+            $("#tag").textContent = x.module === 'R' ? '📋 Review' : x.module === 'C' ? '🎯 Capstone' : 'Module ' + x.module;
+            $("#tag").style.background = D.colors[x.module];
+
+            let arr = x.override || x.videos.map(v => {
+                let mins = v.mins == null ? 'runtime unavailable' : v.mins + ' min';
+                return { title: v.title, mins: mins };
+            });
+
+            $("#videos").innerHTML = arr.map(v =>
+                `<div class="video">
+                    <span class="v-title">${esc(v.title)}</span>
+                    <span class="v-mins">${esc(v.mins)}</span>
+                </div>`
+            ).join("") || '<div class="muted" style="padding:8px 0;">No course video assigned.</div>';
+
+            $("#study").textContent = x.study + " min";
+            $("#lab").textContent = x.lab + " min";
+            $("#notes").textContent = x.notes + " min";
+
+            $("#done").checked = !!s.done;
+            $("#dayNotes").value = s.notes || "";
+
+            $("#modalbg").classList.add("open");
+        }
+
+        function closeModal() {
+            $("#modalbg").classList.remove("open");
+            CUR = null;
+        }
+
+        // ─── RENDER ────────────────────────────────────────────────────────────
+        function render() {
+            let mod = $("#module").value;
+            let q = $("#search").value.toLowerCase();
+            let st = $("#status").value;
+
+            let startDate = new Date("2026-09-01T00:00:00");
+            let endDate = new Date(D.days[D.days.length - 1].date + "T00:00:00");
+
+            let out = '';
+            let current = new Date(startDate);
+            let currentMonth = -1;
+            let monthColors = ['#60a5fa', '#34d399', '#f472b6', '#fbbf24', '#a78bfa', '#fb923c', '#22d3ee', '#f87171', '#818cf8', '#34d399'];
+
+            // Track if we're inside a month grid
+            let monthStarted = false;
+            let monthGrid = '';
+
+            while (current <= endDate) {
+                let month = current.getMonth();
+                let year = current.getFullYear();
+                let iso = formatDate(current);
+
+                // If month changed, close previous month grid and start new one
+                if (month !== currentMonth) {
+                    // Close previous month grid if any
+                    if (monthStarted) {
+                        // Fill remaining cells in the last week of previous month
+                        let lastDayOfMonth = new Date(current.getFullYear(), current.getMonth(), 0);
+                        let lastDayOfWeek = lastDayOfMonth.getDay();
+                        let remainingCells = 6 - lastDayOfWeek;
+                        for (let i = 0; i < remainingCells; i++) {
+                            monthGrid += '<div class="day empty"></div>';
+                        }
+                        out += monthGrid;
+                        monthGrid = '';
+                    }
+
+                    currentMonth = month;
+                    monthStarted = true;
+
+                    // Add month header
+                    let monthName = getMonthName(month);
+                    let colorIndex = month % monthColors.length;
+                    out += `
+                        <div class="month-header">
+                            <span class="month-dot" style="background:${monthColors[colorIndex]}"></span>
+                            ${monthName} ${year}
+                        </div>
+                    `;
+
+                    // Start new month grid with empty cells for days before the 1st
+                    let firstDayOfMonth = new Date(year, month, 1);
+                    let firstDayOfWeek = firstDayOfMonth.getDay();
+                    for (let i = 0; i < firstDayOfWeek; i++) {
+                        monthGrid += '<div class="day empty"></div>';
+                    }
+                }
+
+                // Check if this date exists in our data
+                let x = dayMap[iso];
+
+                if (!x) {
+                    // If this is a date within the month range but no data, it's an empty day
+                    monthGrid += '<div class="day empty"></div>';
+                } else {
+                    let done = !!(S[iso] && S[iso].done);
+                    let search = (x.module_name + ' ' + x.videos.map(v => v.title).join(' ') + ' ' + (x.override || []).join(' ')).toLowerCase();
+                    let vis = (!mod || x.module === mod) &&
+                        (!q || search.includes(q)) &&
+                        (st === 'all' || (st === 'done' ? done : !done));
+
+                    if (!vis) {
+                        monthGrid += '<div class="day empty"></div>';
+                    } else {
+                        let preview = (x.override || x.videos.map(v => v.title)).slice(0, 2).map(esc).join(' • ');
+
+                        let tagLabel = x.module === 'R' ? 'Review' : x.module === 'C' ? 'Capstone' : 'M' + x.module;
+                        let tagColor = D.colors[x.module];
+
+                        monthGrid += `
+                            <div class="day ${done?'done':''}" onclick="openDay('${iso}')">
+                                <div class="day-header">
+                                    <span class="num">${current.getDate()} ${done?'<span class="tick">✓</span>':''}</span>
+                                    <span class="tag day-tag" style="background:${tagColor}">${tagLabel}</span>
+                                </div>
+                                <div class="day-title">${esc(x.module_name)}</div>
+                                <div class="day-time">
+                                    <span>📺 ${x.study}m</span>
+                                    <span>🧪 ${x.lab}m</span>
+                                    <span>📝 ${x.notes}m</span>
+                                </div>
+                                ${preview ? `<div class="day-mini">${preview}</div>` : ''}
+                            </div>
+                        `;
+                    }
+                }
+
+                current.setDate(current.getDate() + 1);
+            }
+
+            // Close the last month grid
+            if (monthStarted) {
+                // Fill remaining cells in the last week
+                let lastDate = new Date(endDate);
+                let lastDayOfWeek = lastDate.getDay();
+                let remainingCells = 6 - lastDayOfWeek;
+                for (let i = 0; i < remainingCells; i++) {
+                    monthGrid += '<div class="day empty"></div>';
+                }
+                out += monthGrid;
+            }
+
+            $("#calendar").innerHTML = out;
+
+            let total = D.days.length;
+            let done = Object.values(S).filter(x => x.done).length;
+            let pct = Math.round((done / total) * 100);
+            $("#stats").textContent = `${done} / ${total} days completed · ${pct}%`;
+            $("#fill").style.width = pct + '%';
+        }
+
+        // ─── INIT ──────────────────────────────────────────────────────────────
+        function init() {
+            let o = '<option value="">📚 All modules</option>';
+            for (let k in D.module_names) {
+                let label = k === 'R' ? '📋 Weekly Review' :
+                    k === 'C' ? '🎯 Final Capstone' :
+                    'Module ' + k + ' — ' + D.module_names[k];
+                o += `<option value="${k}">${label}</option>`;
+            }
+            $("#module").innerHTML = o;
+            render();
+        }
+
+        // ─── EVENT LISTENERS ──────────────────────────────────────────────────
+        $("#search").oninput = render;
+        $("#module").onchange = render;
+        $("#status").onchange = render;
+        $("#close").onclick = closeModal;
+        $("#modalbg").onclick = e => {
+            if (e.target.id === 'modalbg') closeModal();
+        };
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        $("#done").onchange = () => {
+            if (!CUR) return;
+            S[CUR.date] = S[CUR.date] || {};
+            S[CUR.date].done = $("#done").checked;
+            save();
+        };
+
+        $("#save").onclick = () => {
+            if (!CUR) return;
+            S[CUR.date] = S[CUR.date] || {};
+            S[CUR.date].notes = $("#dayNotes").value;
+            save();
+            closeModal();
+        };
+
+        $("#reset").onclick = () => {
+            if (confirm('⚠️ Reset all progress and notes? This cannot be undone.')) {
+                const pwd = prompt('Enter password to confirm reset:');
+                if (pwd === null) return; // user cancelled
+                if (pwd !== '2018') {
+                    alert('❌ Incorrect password. Reset cancelled.');
+                    return;
+                }
+                S = {};
+                save();
+            }
+        };
+
+        $("#print").onclick = () => print();
+
+        // ─── START ──────────────────────────────────────────────────────────────
+        init();
+    </script>
+</body>
+</html>
